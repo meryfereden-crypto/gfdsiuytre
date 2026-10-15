@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harar Travel Dialogue - Audio Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        }
+        .glow-active {
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.5);
+        }
+        .wave-bar {
+            transition: height 0.1s ease;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-slate-100 font-sans flex flex-col justify-between p-4 sm:p-8">
+
+    <header class="max-w-4xl mx-auto w-full text-center mb-6">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-semibold uppercase tracking-wider mb-3">
+            <i class="fa-solid fa-microphone-lines me-1"></i> Interactive Audio Generator & File Exporter
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-2">
+            Harar Dialogue Voice Synthesizer & WAV Exporter
+        </h1>
+        <p class="text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
+            Listen to the dialogue synthesized with deep British male golden voices, or synthesize and download the complete dialogue directly as a <b>.WAV audio file</b>.
+        </p>
+    </header>
+
+    <main class="max-w-4xl mx-auto w-full grid grid-cols-1 md:grid-cols-3 gap-6 my-auto">
+        
+        <!-- Left Column: Audio Controls & Visualizer -->
+        <div class="md:col-span-1 bg-slate-800/80 backdrop-blur border border-slate-700/60 rounded-2xl p-6 flex flex-col justify-between shadow-2xl">
+            <div>
+                <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-blue-400"></i> Voice Settings
+                </h2>
+
+                <div class="space-y-4 text-xs">
+                    <div>
+                        <label class="block text-slate-400 font-medium mb-1">Travel Agent (Deep British Male)</label>
+                        <select id="agentVoiceSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="">Detecting British male voices...</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-400 font-medium mb-1">Tourist (Deep British Male)</label>
+                        <select id="touristVoiceSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="">Detecting British male voices...</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-400 font-medium mb-1">Playback Speed: <span id="rateVal">0.88x</span></label>
+                        <input type="range" id="speechRate" min="0.7" max="1.1" step="0.02" value="0.88" class="w-full accent-blue-500 bg-slate-900 rounded-lg h-1.5 cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-400 font-medium mb-1">Depth / Pitch Modifier: <span id="pitchVal">0.75</span></label>
+                        <input type="range" id="speechPitch" min="0.5" max="1.0" step="0.05" value="0.75" class="w-full accent-blue-500 bg-slate-900 rounded-lg h-1.5 cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+            <div class="my-6">
+                <div class="text-xs text-slate-400 mb-2 flex justify-between">
+                    <span>Audio Status</span>
+                    <span id="statusBadge" class="text-amber-400 font-medium">Ready</span>
+                </div>
+                <div id="visualizer" class="h-16 bg-slate-900/90 rounded-xl border border-slate-700/50 flex items-center justify-center gap-1.5 px-4 overflow-hidden">
+                    <div class="wave-bar w-1.5 bg-blue-500/30 rounded-full h-3"></div>
+                    <div class="wave-bar w-1.5 bg-blue-500/30 rounded-full h-5"></div>
+                    <div class="wave-bar w-1.5 bg-blue-500/30 rounded-full h-8"></div>
+                    <div class="wave-bar w-1.5 bg-blue-500/30 rounded-full h-4"></div>
+                    <div class="wave-bar w-1.5 bg-blue-500/30 rounded-full h-10"></div>
+                    <div class="wave-bar w-1.5 bg-blue-500/30 rounded-full h-6"></div>
+                    <div class="wave-bar w-1.5 bg-blue-500/30 rounded-full h-3"></div>
+                    <div class="wave-bar w-1.5 bg-blue-500/30 rounded-full h-7"></div>
+                    <div class="wave-bar w-1.5 bg-blue-500/30 rounded-full h-4"></div>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <button id="playBtn" onclick="togglePlay()" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30">
+                    <i class="fa-solid fa-play" id="playIcon"></i> <span id="playText">Play Dialogue</span>
+                </button>
+
+                <button id="downloadBtn" onclick="generateAndDownloadWAV()" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition duration-200 flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30">
+                    <i class="fa-solid fa-file-arrow-down" id="downloadIcon"></i> <span id="downloadText">Download Dialogue WAV Audio</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Column: Dialogue Transcript Display -->
+        <div class="md:col-span-2 bg-slate-800/80 backdrop-blur border border-slate-700/60 rounded-2xl p-6 flex flex-col justify-between shadow-2xl">
+            <div>
+                <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-comments text-blue-400"></i> Script Sequence
+                </h2>
+
+                <div id="dialogueContainer" class="space-y-3 max-h-[420px] overflow-y-auto pr-2">
+                    <!-- Lines -->
+                    <div id="line-0" class="dialogue-line p-3.5 rounded-xl border border-slate-700/50 bg-slate-900/40 transition duration-300">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">Travel Agent</span>
+                            <span class="text-slate-500 text-[10px]">Deep, baritone British male voice</span>
+                        </div>
+                        <p class="text-sm text-slate-200">"Hello! Welcome to Addis Ababa. Would you prefer to travel by bus, train, or flight for your trip to Harar next Sunday?"</p>
+                    </div>
+
+                    <div id="line-1" class="dialogue-line p-3.5 rounded-xl border border-slate-700/50 bg-slate-900/40 transition duration-300">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Tourist</span>
+                            <span class="text-slate-500 text-[10px]">Deep, rich British male voice</span>
+                        </div>
+                        <p class="text-sm text-slate-200">"I am not sure yet. What is the difference between them?"</p>
+                    </div>
+
+                    <div id="line-2" class="dialogue-line p-3.5 rounded-xl border border-slate-700/50 bg-slate-900/40 transition duration-300">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">Travel Agent</span>
+                            <span class="text-slate-500 text-[10px]">Informative delivery</span>
+                        </div>
+                        <p class="text-sm text-slate-200">"You can take a domestic flight, which is faster, or a bus, which is cheaper but takes longer."</p>
+                    </div>
+
+                    <div id="line-3" class="dialogue-line p-3.5 rounded-xl border border-slate-700/50 bg-slate-900/40 transition duration-300">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Tourist</span>
+                            <span class="text-slate-500 text-[10px]">Decisive voice</span>
+                        </div>
+                        <p class="text-sm text-slate-200">"I would like to fly to save time. Are there non-stop options?"</p>
+                    </div>
+
+                    <div id="line-4" class="dialogue-line p-3.5 rounded-xl border border-slate-700/50 bg-slate-900/40 transition duration-300">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">Travel Agent</span>
+                            <span class="text-slate-500 text-[10px]">Reassuring tone</span>
+                        </div>
+                        <p class="text-sm text-slate-200">"You can choose between a direct flight and one with stopovers."</p>
+                    </div>
+
+                    <div id="line-5" class="dialogue-line p-3.5 rounded-xl border border-slate-700/50 bg-slate-900/40 transition duration-300">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Tourist</span>
+                            <span class="text-slate-500 text-[10px]">Clear preference</span>
+                        </div>
+                        <p class="text-sm text-slate-200">"I prefer a direct flight. What seating options are available?"</p>
+                    </div>
+
+                    <div id="line-6" class="dialogue-line p-3.5 rounded-xl border border-slate-700/50 bg-slate-900/40 transition duration-300">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">Travel Agent</span>
+                            <span class="text-slate-500 text-[10px]">Professional</span>
+                        </div>
+                        <p class="text-sm text-slate-200">"This airline offers both economy and business class options."</p>
+                    </div>
+
+                    <div id="line-7" class="dialogue-line p-3.5 rounded-xl border border-slate-700/50 bg-slate-900/40 transition duration-300">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Tourist</span>
+                            <span class="text-slate-500 text-[10px]">Satisfied conclusion</span>
+                        </div>
+                        <p class="text-sm text-slate-200">"Excellent, please book me a direct economy flight to Harar for Sunday!"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="max-w-4xl mx-auto w-full text-center text-xs text-slate-500 mt-6">
+        Harar Travel Audio Direct Synthesizer & Exporter • Web Speech & Audio Context API
+    </footer>
+
+    <script>
+        const dialogue = [
+            { speaker: "agent", text: "Hello! Welcome to Addis Ababa. Would you prefer to travel by bus, train, or flight for your trip to Harar next Sunday?" },
+            { speaker: "tourist", text: "I am not sure yet. What is the difference between them?" },
+            { speaker: "agent", text: "You can take a domestic flight, which is faster, or a bus, which is cheaper but takes longer." },
+            { speaker: "tourist", text: "I would like to fly to save time. Are there non-stop options?" },
+            { speaker: "agent", text: "You can choose between a direct flight and one with stopovers." },
+            { speaker: "tourist", text: "I prefer a direct flight. What seating options are available?" },
+            { speaker: "agent", text: "This airline offers both economy and business class options." },
+            { speaker: "tourist", text: "Excellent, please book me a direct economy flight to Harar for Sunday!" }
+        ];
+
+        let synth = window.speechSynthesis;
+        let voices = [];
+        let isPlaying = false;
+        let currentLineIndex = 0;
+        let visualizerInterval = null;
+
+        function populateVoiceList() {
+            voices = synth.getVoices();
+            const agentSelect = document.getElementById('agentVoiceSelect');
+            const touristSelect = document.getElementById('touristVoiceSelect');
+
+            agentSelect.innerHTML = '';
+            touristSelect.innerHTML = '';
+
+            const ukMaleVoices = voices.filter(v => 
+                (v.lang.includes('en-GB') || v.lang.includes('en')) && 
+                (v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('george') || v.name.toLowerCase().includes('daniel') || v.name.toLowerCase().includes('oliver') || v.name.toLowerCase().includes('arthur') || v.name.toLowerCase().includes('uk'))
+            );
+
+            const fallbackUkVoices = voices.filter(v => v.lang.includes('en-GB') || v.lang.includes('en'));
+            const optionsList = ukMaleVoices.length > 0 ? ukMaleVoices : (fallbackUkVoices.length > 0 ? fallbackUkVoices : voices);
+
+            optionsList.forEach((voice, index) => {
+                const opt1 = new Option(`${voice.name} (${voice.lang}) - Deep Baritone`, index);
+                const opt2 = new Option(`${voice.name} (${voice.lang}) - Deep Bass`, index);
+                agentSelect.add(opt1);
+                touristSelect.add(opt2);
+            });
+
+            if (optionsList.length > 1) {
+                agentSelect.selectedIndex = 0;
+                touristSelect.selectedIndex = 1;
+            } else {
+                agentSelect.selectedIndex = 0;
+                touristSelect.selectedIndex = 0;
+            }
+        }
+
+        populateVoiceList();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoiceList;
+        }
+
+        document.getElementById('speechRate').addEventListener('input', (e) => {
+            document.getElementById('rateVal').innerText = e.target.value + 'x';
+        });
+
+        document.getElementById('speechPitch').addEventListener('input', (e) => {
+            document.getElementById('pitchVal').innerText = e.target.value;
+        });
+
+        function startVisualizer() {
+            const bars = document.querySelectorAll('.wave-bar');
+            visualizerInterval = setInterval(() => {
+                bars.forEach(bar => {
+                    const h = Math.floor(Math.random() * 28) + 8;
+                    bar.style.height = `${h}px`;
+                    bar.classList.replace('bg-blue-500/30', 'bg-blue-400');
+                });
+            }, 100);
+        }
+
+        function stopVisualizer() {
+            clearInterval(visualizerInterval);
+            const bars = document.querySelectorAll('.wave-bar');
+            bars.forEach(bar => {
+                bar.style.height = '12px';
+                bar.classList.replace('bg-blue-400', 'bg-blue-500/30');
+            });
+        }
+
+        function highlightLine(index) {
+            document.querySelectorAll('.dialogue-line').forEach((el, idx) => {
+                if (idx === index) {
+                    el.classList.add('bg-blue-900/40', 'border-blue-500/80', 'glow-active');
+                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    el.classList.remove('bg-blue-900/40', 'border-blue-500/80', 'glow-active');
+                }
+            });
+        }
+
+        function applyVoiceSettings(utterance, speaker) {
+            const ukMaleVoices = voices.filter(v => 
+                (v.lang.includes('en-GB') || v.lang.includes('en')) && 
+                (v.name.toLowerCase().includes('male') || v.name.toLowerCase().includes('george') || v.name.toLowerCase().includes('daniel') || v.name.toLowerCase().includes('oliver') || v.name.toLowerCase().includes('arthur') || v.name.toLowerCase().includes('uk'))
+            );
+            const fallbackUkVoices = voices.filter(v => v.lang.includes('en-GB') || v.lang.includes('en'));
+            const optionsList = ukMaleVoices.length > 0 ? ukMaleVoices : (fallbackUkVoices.length > 0 ? fallbackUkVoices : voices);
+
+            const agentIdx = document.getElementById('agentVoiceSelect').value || 0;
+            const touristIdx = document.getElementById('touristVoiceSelect').value || 0;
+            const basePitch = parseFloat(document.getElementById('speechPitch').value);
+
+            if (speaker === 'agent') {
+                utterance.voice = optionsList[agentIdx] || voices[0];
+                // Deep baritone settings
+                utterance.pitch = Math.max(0.5, basePitch * 0.72); 
+            } else {
+                utterance.voice = optionsList[touristIdx] || voices[0];
+                // Resonant deep male voice settings
+                utterance.pitch = Math.max(0.5, basePitch * 0.82); 
+            }
+
+            utterance.rate = parseFloat(document.getElementById('speechRate').value);
+        }
+
+        function speakLine(index) {
+            if (!isPlaying || index >= dialogue.length) {
+                isPlaying = false;
+                document.getElementById('playText').innerText = 'Play Dialogue';
+                document.getElementById('playIcon').className = 'fa-solid fa-play';
+                document.getElementById('statusBadge').innerText = 'Completed';
+                document.getElementById('statusBadge').className = 'text-emerald-400 font-medium';
+                stopVisualizer();
+                return;
+            }
+
+            currentLineIndex = index;
+            highlightLine(index);
+
+            const item = dialogue[index];
+            const utterance = new SpeechSynthesisUtterance(item.text);
+
+            applyVoiceSettings(utterance, item.speaker);
+
+            utterance.onend = () => {
+                setTimeout(() => {
+                    if (isPlaying) speakLine(index + 1);
+                }, 400);
+            };
+
+            utterance.onerror = () => {
+                stopVisualizer();
+                isPlaying = false;
+            };
+
+            synth.speak(utterance);
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                synth.cancel();
+                isPlaying = false;
+                stopVisualizer();
+                document.getElementById('playText').innerText = 'Play Dialogue';
+                document.getElementById('playIcon').className = 'fa-solid fa-play';
+                document.getElementById('statusBadge').innerText = 'Paused';
+                document.getElementById('statusBadge').className = 'text-amber-400 font-medium';
+            } else {
+                synth.cancel();
+                isPlaying = true;
+                document.getElementById('playText').innerText = 'Pause';
+                document.getElementById('playIcon').className = 'fa-solid fa-pause';
+                document.getElementById('statusBadge').innerText = 'Playing Audio';
+                document.getElementById('statusBadge').className = 'text-blue-400 font-medium animate-pulse';
+                startVisualizer();
+                speakLine(0);
+            }
+        }
+
+        async function generateAndDownloadWAV() {
+            if (isPlaying) synth.cancel();
+            isPlaying = false;
+
+            const downloadBtn = document.getElementById('downloadBtn');
+            const downloadText = document.getElementById('downloadText');
+            const downloadIcon = document.getElementById('downloadIcon');
+            const statusBadge = document.getElementById('statusBadge');
+
+            downloadBtn.disabled = true;
+            downloadText.innerText = "Synthesizing Deep Voice Audio...";
+            downloadIcon.className = "fa-solid fa-spinner fa-spin";
+            statusBadge.innerText = "Capturing Deep Audio...";
+            statusBadge.className = "text-emerald-400 font-medium animate-pulse";
+            startVisualizer();
+
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const dest = audioCtx.createMediaStreamDestination();
+                const mediaRecorder = new MediaRecorder(dest.stream);
+                const chunks = [];
+
+                mediaRecorder.ondataavailable = e => {
+                    if (e.data.size > 0) chunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    stopVisualizer();
+                    const audioBlob = new Blob(chunks, { type: 'audio/wav' });
+                    
+                    const downloadUrl = URL.createObjectURL(audioBlob);
+                    const link = document.createElement('a');
+                    link.href = downloadUrl;
+                    link.download = 'Harar_Travel_Dialogue_DeepMale.wav';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    downloadBtn.disabled = false;
+                    downloadText.innerText = "Download Dialogue WAV Audio";
+                    downloadIcon.className = "fa-solid fa-file-arrow-down";
+                    statusBadge.innerText = "Deep Male WAV Downloaded!";
+                    statusBadge.className = "text-emerald-400 font-bold";
+                };
+
+                mediaRecorder.start();
+
+                let lineIndex = 0;
+                function speakLineForRecord() {
+                    if (lineIndex >= dialogue.length) {
+                        setTimeout(() => {
+                            mediaRecorder.stop();
+                            audioCtx.close();
+                        }, 500);
+                        return;
+                    }
+
+                    highlightLine(lineIndex);
+                    const item = dialogue[lineIndex];
+                    const utterance = new SpeechSynthesisUtterance(item.text);
+
+                    applyVoiceSettings(utterance, item.speaker);
+
+                    utterance.onend = () => {
+                        lineIndex++;
+                        setTimeout(speakLineForRecord, 350);
+                    };
+
+                    utterance.onerror = () => {
+                        mediaRecorder.stop();
+                        audioCtx.close();
+                    };
+
+                    synth.speak(utterance);
+                }
+
+                speakLineForRecord();
+
+            } catch (err) {
+                console.error(err);
+                stopVisualizer();
+                downloadBtn.disabled = false;
+                downloadText.innerText = "Download Dialogue WAV Audio";
+                downloadIcon.className = "fa-solid fa-file-arrow-down";
+                statusBadge.innerText = "Playback Ready";
+                statusBadge.className = "text-amber-400 font-medium";
+            }
+        }
+    </script>
+</body>
+</html>
